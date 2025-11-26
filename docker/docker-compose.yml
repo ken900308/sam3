@@ -1,0 +1,126 @@
+# SAM3 Docker Compose 配置
+# Docker Compose v2+ 不需要 version 屬性
+
+services:
+  sam3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: sam3:latest
+    container_name: sam3_container
+    hostname: sam3-docker
+    
+    # Enable GPU support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    
+    # Environment variables
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - CUDA_VISIBLE_DEVICES=0
+      # Hugging Face token (optional, set in host environment)
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HUGGINGFACE_HUB_CACHE=/workspace/.cache/huggingface
+      # ROS settings
+      - ROS_DOMAIN_ID=0
+      - ROS_LOCALHOST_ONLY=0
+      
+    # Volume mounts
+    volumes:
+      # Mount the entire sam3 directory to /workspace/sam3
+      - ../:/workspace/sam3
+      # X11 socket for GUI display
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # Optional: Mount Hugging Face cache to persist downloaded models
+      - ~/.cache/huggingface:/workspace/.cache/huggingface
+      # Optional: Mount datasets directory
+      - ~/datasets:/workspace/datasets:ro
+      # Shared memory for PyTorch DataLoader
+      - /dev/shm:/dev/shm
+    
+    # Network mode
+    network_mode: host
+    
+    # IPC mode for shared memory
+    ipc: host
+    
+    # Privileged mode for full GPU access
+    privileged: true
+    
+    # Devices
+    devices:
+      - /dev/dri:/dev/dri
+    
+    # Keep container running
+    stdin_open: true
+    tty: true
+    
+    # Working directory
+    working_dir: /workspace/sam3
+    
+    # Command to run on startup
+    command: /bin/bash
+    
+    # Security options
+    security_opt:
+      - seccomp:unconfined
+    
+    # User (optional: run as current user instead of root)
+    # user: "${UID}:${GID}"
+
+  # Optional: Jupyter notebook service
+  sam3-jupyter:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: sam3:latest
+    container_name: sam3_jupyter
+    
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    
+    environment:
+      - DISPLAY=${DISPLAY}
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HUGGINGFACE_HUB_CACHE=/workspace/.cache/huggingface
+    
+    volumes:
+      - ../:/workspace/sam3
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ~/.cache/huggingface:/workspace/.cache/huggingface
+      - ~/datasets:/workspace/datasets:ro
+      - /dev/shm:/dev/shm
+    
+    network_mode: host
+    ipc: host
+    privileged: true
+    
+    working_dir: /workspace/sam3
+    
+    # Start Jupyter notebook
+    command: >
+      bash -c "jupyter notebook 
+      --ip=0.0.0.0 
+      --port=8888 
+      --no-browser 
+      --allow-root 
+      --NotebookApp.token='' 
+      --NotebookApp.password=''"
+    
+    stdin_open: true
+    tty: true
