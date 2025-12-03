@@ -140,7 +140,8 @@ RUN pip install --no-cache-dir --break-system-packages --ignore-installed \
     scikit-learn \
     opencv-contrib-python \
     pillow \
-    requests
+    requests \
+    flask
 
 # Install development tools
 RUN pip install --no-cache-dir --break-system-packages --ignore-installed \

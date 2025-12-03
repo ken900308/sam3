@@ -58,6 +58,9 @@ services:
     # Devices
     devices:
       - /dev/dri:/dev/dri
+      # Webcam support - add all video devices
+      - /dev/video0:/dev/video0
+      - /dev/video1:/dev/video1
     
     # Keep container running
     stdin_open: true

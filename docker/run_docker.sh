@@ -79,14 +79,14 @@ SAM3 Docker 快速啟動腳本
 
 命令:
     build       構建 Docker 映像
-    start       啟動持久化容器（推薦，不會自動刪除）
-    run         啟動一次性容器（退出後自動刪除）
-    jupyter     啟動 Jupyter notebook 服務
+    start       啟動持久化容器（推薦，不會自動刪除） ok 
+    run         啟動一次性容器（退出後自動刪除）   
+    jupyter     啟動 Jupyter notebook 服務    ok
     exec        在運行中的容器執行命令
     stop        停止所有容器
     clean       清理容器和映像                   
-    logs        查看容器日誌                    not ok
-    shell       進入容器 shell                 not ok
+    logs        查看容器日誌                     ok
+    shell       進入容器 shell                  ok
     test        測試容器配置                     ok 
     help        顯示此幫助信息                    ok
 
@@ -178,8 +178,10 @@ enter_shell() {
     if $COMPOSE_CMD ps sam3 | grep -q "Up"; then
         $COMPOSE_CMD exec sam3 /bin/bash
     else
-        print_warning "容器未運行，啟動新的互動式容器..."
-        run_container /bin/bash
+        print_warning "容器未運行，正在啟動持久化容器..."
+        start_container
+        print_info "進入容器..."
+        $COMPOSE_CMD exec sam3 /bin/bash
     fi
 }
 
@@ -273,9 +275,11 @@ main() {
             start_jupyter "$@"
             ;;
         exec)
+            check_dependencies
             exec_command "$@"
             ;;
         shell)
+            check_dependencies
             enter_shell "$@"
             ;;
         stop)
